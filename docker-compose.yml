@@ -3,78 +3,119 @@ networks:
   nocobase:
     driver: bridge
 services:
-  verdaccio:
-    image: verdaccio/verdaccio
-    networks:
-      - nocobase
+  # verdaccio:
+  #   image: verdaccio/verdaccio
+  #   networks:
+  #     - nocobase
+  #   environment:
+  #     VERDACCIO_PORT: ${VERDACCIO_PORT}
+  #   restart: always
+  #   ports:
+  #     - "${VERDACCIO_PORT}:${VERDACCIO_PORT}"
+  # mysql:
+  #   image: mysql:8
+  #   environment:
+  #     MYSQL_DATABASE: ${DB_DATABASE}
+  #     MYSQL_USER: ${DB_USER}
+  #     MYSQL_PASSWORD: ${DB_PASSWORD}
+  #     MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+  #   restart: always
+  #   ports:
+  #     - "${DB_MYSQL_PORT}:3306"
+  #   networks:
+  #     - nocobase
+  # kingbase:
+  #   image: registry.cn-shanghai.aliyuncs.com/nocobase/kingbase:v009r001c001b0030_single_x86
+  #   platform: linux/amd64
+  #   restart: always
+  #   privileged: true
+  #   networks:
+  #     - nocobase
+  #   ports:
+  #     - "${DB_KINGBASE_PORT}:54321"
+  #   environment:
+  #     ENABLE_CI: no
+  #     DB_USER: ${DB_USER}
+  #     DB_PASSWORD: ${DB_PASSWORD}
+  #     DB_MODE: pg
+  #     NEED_START: yes
+  #   command: ["/usr/sbin/init"]
+  #   volumes:
+  #     - ./storage/db/kingbase:/home/kingbase/userdata
+  # postgres:
+  #   image: postgres:latest
+  #   restart: always
+  #   networks:
+  #     - nocobase
+  #   command: postgres -c wal_level=logical
+  #   ports:
+  #     - "${DB_POSTGRES_PORT}:5432"
+  #   volumes:
+  #     - ./storage/db/postgres/backups:/backups
+  #   environment:
+  #     POSTGRES_USER: ${DB_USER}
+  #     POSTGRES_DB: ${DB_DATABASE}
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD}
+  # adminer:
+  #   image: nocobase/adminer
+  #   restart: always
+  #   networks:
+  #     - nocobase
+  #   ports:
+  #     - ${ADMINER_PORT}:8080
+  #   volumes:
+  #     - ./:/var/www/app
+  # nocobase:
+  #   image: nocobase/nocobase:latest
+  #   container_name: nocobase-app
+  #   networks:
+  #     - nocobase
+  #   command: [ "yarn", "start" ]
+  #   working_dir: /app
+  #   env_file: ./.env
+  #   volumes:
+  #     - ./:/app
+  #   expose:
+  #     - ${APP_PORT}
+  #   ports:
+  #     - "13000:13000"
+
+  app:
+    image: nocobase/nocobase:latest
+    container_name: nocobase-app
+    ports:
+      - "13000:13000"
     environment:
-      VERDACCIO_PORT: ${VERDACCIO_PORT}
+      APP_KEY: localdev
+      DB_TYPE: postgres
+      DB_DIALECT: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: nocobase
+      DB_PASSWORD: nocobase
+      DB_DATABASE: nocobase
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./storage:/app/storage
+
+  db:
+    image: postgres:14
+    container_name: nocobase-db
     restart: always
-    ports:
-      - "${VERDACCIO_PORT}:${VERDACCIO_PORT}"
-  mysql:
-    image: mysql:8
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-    restart: always
-    ports:
-      - "${DB_MYSQL_PORT}:3306"
-    networks:
-      - nocobase
-  kingbase:
-    image: registry.cn-shanghai.aliyuncs.com/nocobase/kingbase:v009r001c001b0030_single_x86
-    platform: linux/amd64
-    restart: always
-    privileged: true
-    networks:
-      - nocobase
-    ports:
-      - "${DB_KINGBASE_PORT}:54321"
-    environment:
-      ENABLE_CI: no
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_MODE: pg
-      NEED_START: yes
-    command: ["/usr/sbin/init"]
+      POSTGRES_USER: nocobase
+      POSTGRES_PASSWORD: nocobase
+      POSTGRES_DB: nocobase
     volumes:
-      - ./storage/db/kingbase:/home/kingbase/userdata
-  postgres:
-    image: postgres:latest
+      - ./data/postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6
+    container_name: nocobase-redis
     restart: always
-    networks:
-      - nocobase
-    command: postgres -c wal_level=logical
-    ports:
-      - "${DB_POSTGRES_PORT}:5432"
     volumes:
-      - ./storage/db/postgres/backups:/backups
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_DB: ${DB_DATABASE}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-  adminer:
-    image: nocobase/adminer
-    restart: always
-    networks:
-      - nocobase
-    ports:
-      - ${ADMINER_PORT}:8080
-    volumes:
-      - ./:/var/www/app
-  nocobase:
-    image: node:16-stretch-slim
-    networks:
-      - nocobase
-    command: [ "yarn", "start" ]
-    working_dir: /app
-    env_file: ./.env
-    volumes:
-      - ./:/app
-    expose:
-      - ${APP_PORT}
-    ports:
-      - "${APP_PORT}:${APP_PORT}"
+      - ./data/redis:/data
