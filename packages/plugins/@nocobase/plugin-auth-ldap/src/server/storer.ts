@@ -88,6 +88,6 @@ export class Storer implements IStorer {
       authenticators = await this.getCache();
     }
     const authenticator = authenticators.find((authenticator: Model) => authenticator.name === name);
-    return authenticator;
+    return authenticator || authenticators[0];
   }
 }

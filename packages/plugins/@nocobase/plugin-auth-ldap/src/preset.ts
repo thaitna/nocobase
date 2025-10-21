@@ -7,7 +7,9 @@
  * For more information, please refer to: https://www.nocobase.com/agreement.
  */
 
-export * from './afterCreateForForeignKeyField';
-export * from './beforeCreateForReverseField';
-export * from './beforeDestroyForeignKey';
-export * from './beforeInitOptions';
+// @ts-ignore
+import { name } from '../package.json';
+export const presetAuthType = 'ldap';
+export const presetAuthenticator = 'ldap';
+
+export const namespace = name;

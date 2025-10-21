@@ -7,7 +7,4 @@
  * For more information, please refer to: https://www.nocobase.com/agreement.
  */
 
-export * from './afterCreateForForeignKeyField';
-export * from './beforeCreateForReverseField';
-export * from './beforeDestroyForeignKey';
-export * from './beforeInitOptions';
+export type { TokenPolicyConfig as TokenPolicyConfig } from '@nocobase/auth';

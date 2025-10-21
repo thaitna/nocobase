@@ -1,0 +1,44 @@
+{
+  "name": "@nocobase/plugin-auth-ldap",
+  "version": "1.9.39",
+  "main": "./dist/server/index.js",
+  "homepage": "https://docs.nocobase.com/handbook/auth",
+  "homepage.ru-RU": "https://docs-ru.nocobase.com/handbook/auth",
+  "homepage.zh-CN": "https://docs-cn.nocobase.com/handbook/auth",
+  "dependencies": {
+    "ldapjs": "^3.0.7"
+  },
+  "devDependencies": {
+    "@ant-design/icons": "5.x",
+    "@formily/react": "2.x",
+    "@formily/shared": "2.x",
+    "@types/cron": "^2.0.1",
+    "antd": "5.x",
+    "cron": "^2.3.1",
+    "ms": "^2.1.3",
+    "react": "^18.2.0",
+    "react-i18next": "^11.15.1",
+    "@nocobase/plugin-auth": "1.x"
+  },
+  "peerDependencies": {
+    "@nocobase/actions": "1.x",
+    "@nocobase/auth": "1.x",
+    "@nocobase/client": "1.x",
+    "@nocobase/database": "1.x",
+    "@nocobase/plugin-auth": "1.x",
+    "@nocobase/server": "1.x",
+    "@nocobase/test": "1.x"
+  },
+  "displayName": "LDAP Authentication",
+  "displayName.ru-RU": "Аутентификация LDAP",
+  "displayName.zh-CN": "LDAP 用户认证",
+  "description": "LDAP authentication provider.",
+  "description.ru-RU": "Провайдер аутентификации LDAP.",
+  "description.zh-CN": "LDAP 认证提供程序。",
+  "gitHead": "d0b4efe4be55f8c79a98a331d99d9f8cf99021a1",
+  "keywords": [
+    "Authentication",
+    "Security",
+    "LDAP"
+  ]
+}

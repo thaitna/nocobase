@@ -7,7 +7,4 @@
  * For more information, please refer to: https://www.nocobase.com/agreement.
  */
 
-export * from './afterCreateForForeignKeyField';
-export * from './beforeCreateForReverseField';
-export * from './beforeDestroyForeignKey';
-export * from './beforeInitOptions';
+export { AuthModel, default, presetAuthType } from './server';
