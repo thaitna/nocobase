@@ -49,8 +49,8 @@ import { HasOneRepository } from './relation-repository/hasone-repository';
 import { RelationRepository } from './relation-repository/relation-repository';
 import { updateAssociations, updateModelByValues } from './update-associations';
 import { UpdateGuard } from './update-guard';
-import { valuesToFilter } from './utils/filter-utils';
 import { processIncludes } from './utils';
+import { valuesToFilter } from './utils/filter-utils';
 
 const debug = require('debug')('noco-database');
 
@@ -66,7 +66,7 @@ export interface FilterAble {
 
 export type BaseTargetKey = string | number;
 export type MultiTargetKey = Record<string, BaseTargetKey>;
-export type TargetKey = BaseTargetKey | MultiTargetKey;
+export type TargetKey = BaseTargetKey | MultiTargetKey | MultiTargetKey[];
 
 export type TK = TargetKey | TargetKey[];
 
@@ -115,7 +115,7 @@ export type CountOptions = Omit<SequelizeCountOptions, 'distinct' | 'where' | 'i
   } & FilterByTk;
 
 export interface FilterByTk {
-  filterByTk?: TargetKey;
+  filterByTk?: TK;
   targetCollection?: string;
 }
 
@@ -642,6 +642,10 @@ export class Repository<TModelAttributes extends {} = any, TCreationAttributes e
     return this.create({ values, transaction, context, ...rest });
   }
 
+  private validate(options: { values: Record<string, any>[]; operation: 'create' | 'update' }) {
+    this.collection.validate(options);
+  }
+
   /**
    * Save instance to database
    *
@@ -656,7 +660,6 @@ export class Repository<TModelAttributes extends {} = any, TCreationAttributes e
         records: options.values,
       });
     }
-
     const transaction = await this.getTransaction(options);
 
     const guard = UpdateGuard.fromOptions(this.model, {
@@ -666,7 +669,7 @@ export class Repository<TModelAttributes extends {} = any, TCreationAttributes e
     });
 
     const values = (this.model as typeof Model).callSetters(guard.sanitize(options.values || {}), options);
-
+    this.validate({ values: values as any, operation: 'create' });
     const instance = await this.model.create<any>(values, {
       ...options,
       transaction,
@@ -732,13 +735,12 @@ export class Repository<TModelAttributes extends {} = any, TCreationAttributes e
         records: options.values,
       });
     }
-
     const transaction = await this.getTransaction(options);
 
     const guard = UpdateGuard.fromOptions(this.model, { ...options, underscored: this.collection.options.underscored });
 
     const values = (this.model as typeof Model).callSetters(guard.sanitize(options.values || {}), options);
-
+    this.validate({ values: values as any, operation: 'update' });
     // NOTE:
     // 1. better to be moved to separated API like bulkUpdate/updateMany
     // 2. strictly `false` comparing for compatibility of legacy api invoking

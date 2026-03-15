@@ -34,6 +34,13 @@ import {
   updatePluginByCompressedFileUrl,
 } from './utils';
 
+class PluginLoadError extends Error {
+  constructor(pluginName: string) {
+    super(`${pluginName} plugin load error`);
+    this.name = 'PluginLoadError';
+  }
+}
+
 export const sleep = async (timeout = 0) => {
   return new Promise((resolve) => {
     setTimeout(resolve, timeout);
@@ -107,7 +114,7 @@ export class PluginManager {
       directory: resolve(__dirname, '../migrations'),
     });
 
-    this.app.resourcer.use(uploadMiddleware);
+    this.app.resourceManager.use(uploadMiddleware, { tag: 'upload', after: 'acl' });
   }
 
   /**
@@ -463,6 +470,7 @@ export class PluginManager {
       await this.app.emitAsync('beforeLoadPlugin', plugin, options);
       this.app.logger.trace(`load plugin [${name}] `, { submodule: 'plugin-manager', method: 'load', name });
       await plugin.loadCollections();
+      await plugin.loadAI();
       await plugin.load();
       plugin.state.loaded = true;
       await this.app.emitAsync('afterLoadPlugin', plugin, options);
@@ -571,7 +579,7 @@ export class PluginManager {
         const { name: pluginName } = await PluginManager.parseName(name);
         const plugin = this.get(pluginName);
         if (!plugin) {
-          throw new Error(`${pluginName} plugin does not exist`);
+          throw new PluginLoadError(pluginName);
         }
         if (added[pluginName]) {
           continue;
@@ -594,7 +602,7 @@ export class PluginManager {
         const { name: pluginName } = await PluginManager.parseName(name);
         const plugin = this.get(pluginName);
         if (!plugin) {
-          throw new Error(`${pluginName} plugin does not exist`);
+          throw new PluginLoadError(pluginName);
         }
         if (added[pluginName]) {
           continue;
@@ -603,6 +611,7 @@ export class PluginManager {
           continue;
         }
         await plugin.loadCollections();
+        await plugin.loadAI();
         await plugin.load();
       }
     } catch (error) {
@@ -618,7 +627,7 @@ export class PluginManager {
       const { name: pluginName } = await PluginManager.parseName(name);
       const plugin = this.get(pluginName);
       if (!plugin) {
-        throw new Error(`${pluginName} plugin does not exist`);
+        throw new PluginLoadError(pluginName);
       }
       if (plugin.enabled) {
         continue;
@@ -692,7 +701,7 @@ export class PluginManager {
       const { name: pluginName } = await PluginManager.parseName(name);
       const plugin = this.get(pluginName);
       if (!plugin) {
-        throw new Error(`${pluginName} plugin does not exist`);
+        throw new PluginLoadError(pluginName);
       }
       if (!plugin.enabled) {
         continue;
@@ -764,6 +773,42 @@ export class PluginManager {
     });
     if (!this.app.db.getCollection('applications')) {
       await removeDir();
+    }
+  }
+
+  async pull(urlOrName: string | string[], options?: PluginData, emitStartedEvent = true) {
+    if (Array.isArray(urlOrName)) {
+      for (const packageName of urlOrName) {
+        await this.addViaCLI(packageName, _.omit(options, 'name'), false);
+      }
+      return;
+    }
+    if (isURL(urlOrName)) {
+      await this.addByCompressedFileUrl(
+        {
+          ...options,
+          compressedFileUrl: urlOrName,
+        },
+        emitStartedEvent,
+      );
+    } else if (await fs.exists(urlOrName)) {
+      await this.addByCompressedFileUrl(
+        {
+          ...(options as any),
+          compressedFileUrl: urlOrName,
+        },
+        emitStartedEvent,
+      );
+    } else if (options?.registry) {
+      const { name, packageName } = await PluginManager.parseName(urlOrName);
+      options['name'] = name;
+      await this.addByNpm(
+        {
+          ...(options as any),
+          packageName,
+        },
+        emitStartedEvent,
+      );
     }
   }
 

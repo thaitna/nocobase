@@ -58,6 +58,7 @@ describe('query', () => {
       ctx = {
         app,
         db,
+        database: db,
       };
     });
 
@@ -298,12 +299,11 @@ describe('query', () => {
     });
 
     it('parse variables', async () => {
+      const user = await db.getRepository('users').findOne();
       const context = {
         ...ctx,
         state: {
-          currentUser: {
-            id: 1,
-          },
+          currentUser: user,
         },
         get: (key: string) => {
           return {
@@ -332,7 +332,7 @@ describe('query', () => {
       const dateOn = filter.$and[0].createdAt.$dateOn;
       expect(new Date(dateOn).getTime()).toBeLessThanOrEqual(new Date().getTime());
       const userId = filter.$and[1].userId.$eq;
-      expect(userId).toBe(1);
+      expect(userId).toBe(user.id);
     });
   });
 
